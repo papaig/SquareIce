@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import re
 import numpy as np
-import mrcfile as mrc
+import mrcfile
 import os
 N = 3
 string = "FilterSlitAndLoss"
@@ -10,8 +10,8 @@ listOfLines = mdoc.readlines()
 for i in listOfLines:
 	if string in i:
 		slitWidth = int(i.split(' ')[N-1])
-imaNoFilt = mrc.open('square_ice-test-NoFilter.mrc')
-imaWithFilt = mrc.open('square_ice-test-WithFilter.mrc')
+imaNoFilt = mrcfile.open('square_ice-test-NoFilter.mrc')
+imaWithFilt = mrcfile.open('square_ice-test-WithFilter.mrc')
 coEf = 395
 if slitWidth == 20:
 	coEf = 435
