@@ -1,0 +1,64 @@
+MacroName Screening-Squares
+###############################
+###### To do before the script!######
+###############################
+# Set optics for square map.
+# Setup a montage in SerialEM.
+#label interesting squares with point - IMPORTANT: first point has to be in a hole for vacuum intensity!
+###################
+### Values to edit  ###
+workFolder = E:\Users\Gabor\Del  #set up folder where all the images will be saved
+iceFiltThick = 60  #set thick ice filter value
+iceFiltThin = 25  #set thin ice filter value
+###################
+#Check whether montage file is open
+ReportNumMontagePieces
+montPieceNum = $repVal1
+If $montPieceNum == 1
+  Echo No montage file was found
+  Echo exiting...
+  Exit
+Endif
+# Start script.
+# all maps will go into one file.
+#Check whether column valve is open
+ReportColumnOrGunValve
+valveStatus = $repVal1
+If $valveStatus == 0
+  SetColumnOrGunValve 1
+Endif
+#1st square should be an empty square - to obtain vacuum intensity.
+ReportGroupStatus
+groupStat = $repVal1
+If $groupStat == 1
+  R
+  #take mean intensity (for vacuum intensity) on K3 dectector size part of the image
+  ImageProperties A piX piY bin exp pixel
+  halfX = $piX / 2
+  halfY = $piY / 2
+  detSizeX = 11520 / $pixel / 10
+  halfDetSize = ( NEARINT ( $detSizeX / 2 ) ) - 4
+  SubareaMean ( $halfX - $halfDetSize ) ( $halfX + $halfDetSize ) ( $halfY - $halfDetSize ) ( $halfY + $halfDetSize )  IntZero
+  #Write vacuum intensity and thickness filters to file
+  AllowFileOverwrite 1
+  OpenTextFile 0 W 0 $workFolder\iceData.txt
+  WriteLineToFile 0 VacuumIntensity $intZero
+  WriteLineToFile 0 ThickIceFilter $iceFiltThick
+  WriteLineToFile 0 ThinIceFilter $iceFiltThin
+  FlushTextFile 0
+  CloseTextFile 0
+  AllowFileOverwrite  0
+Else
+  ReportNavItem
+  navIndex = $repVal1
+  Eucentricity 1
+  M
+#create new map as integers - for ice thickness calculations
+ReportProperty ConvertMapsToBytesDefault convertSaved
+SetProperty ConvertMapsToBytesDefault 0
+NewMap
+SetProperty ConvertMapsToBytesDefault $convertSaved
+SaveToOtherFile B MRC NONE $workFolder\Square-$navIndex.mrc #the mrc file is in int16.
+UpdateGroupZ
+SaveNavigator
+Endif
