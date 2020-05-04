@@ -1,32 +1,18 @@
 #!/usr/bin/env python3
-import re
+import re, os, glob, scipy
+import scipy.ndimage
 import numpy as np
-import mrcfile
-import os
-N = 3
-string = "FilterSlitAndLoss"
-mdoc = open("square_ice-test-WithFilter.mrc.mdoc",'r')
-listOfLines = mdoc.readlines()
-for i in listOfLines:
-	if string in i:
-		slitWidth = int(i.split(' ')[N-1])
-imaNoFilt = mrcfile.open('square_ice-test-NoFilter.mrc')
-imaWithFilt = mrcfile.open('square_ice-test-WithFilter.mrc')
-coEf = 395
-if slitWidth == 20:
-	coEf = 435
-	
-if slitWidth == 15:
-	coEf = 395
-
-combIm = np.around(coEf * np.log(imaNoFilt.data / imaWithFilt.data)).astype(np.int16).clip(min=0)
-#combIm[combIm == 0] = '1000' #not sure that this needs to be done
-newFile = mrcfile.new("test-comb.mrc")
-newFile.set_data(combIm)
-newFile.close()
-combIm[combIm >50 ] = '0'
-combIm[combIm <30 ] = '0'
-combIm[combIm >0 ] = '1'
-ber = mrcfile.new("test-comb-filt50-30.mrc")
-ber.set_data(combIm)
-ber.close()
+import mrcfile as mrc
+from pathlib import Path
+from PIL import Image
+import iceDet
+ice = iceDet.iceImage()
+path = os.getcwd() # get current path
+ice.create_colors()
+ice.read_params_fromSerialEM("iceData.txt")
+for sqFile in glob.iglob(path + '/Square-*.mrc'):
+	sqBase = Path(sqFile).stem
+	ice.sqFile = sqFile
+	ice.read_sqareMode()
+	ice.read_square()
+	ice.make_color_image(sqBase)
